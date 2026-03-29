@@ -133,8 +133,8 @@ module pcileech_bar_impl_rtl8168_io(
     bit [31:0] oob_ctrl = 32'h00000000;   // OOB Control (0x94)
     bit [31:0] oob_base = 32'h00000000;   // OOB Base (0x98)
 
-    wire [7:0] rd_dw_off = {rd_req_addr[7:2], 2'b00};
-    wire [7:0] wr_dw_off = {wr_addr[7:2], 2'b00};
+    wire [7:0] rd_dw_off = rd_req_addr[7:0];
+    wire [7:0] wr_dw_off = wr_addr[7:0];
 
     // ======================== Write Condition Signals ========================
     wire mac0_wr        = wr_valid && (wr_dw_off == 8'h00);
@@ -173,7 +173,7 @@ module pcileech_bar_impl_rtl8168_io(
     wire rxdesc_high_wr = wr_valid && (wr_dw_off == 8'hE8);
     wire etthr_wr       = wr_valid && (wr_dw_off == 8'hED);
     wire mtps_wr        = wr_valid && (wr_dw_off == 8'hEC);
-    wire vlan_tag_wr    = wr_valid && (wr_dw_off == 8'h80);
+    wire vlan_tag_wr    = wr_valid && (wr_dw_off == 8'hC0);
     wire oob_sig_wr     = wr_valid && (wr_dw_off == 8'h90);
     wire oob_ctrl_wr    = wr_valid && (wr_dw_off == 8'h94);
     wire oob_base_wr    = wr_valid && (wr_dw_off == 8'h98);
@@ -473,8 +473,8 @@ module pcileech_bar_impl_rtl8168_io(
                 if (wr_be[1]) etthr <= wr_data[15:8];
             end
 
-            // ================== VLAN Tag Register (0x80) ==================
-            if (vlan_tag_wr && (wr_dw_off == 8'h80)) begin
+            // ================== VLAN Tag Register (0xC0) ==================
+            if (vlan_tag_wr) begin
                 if (wr_be[0]) vlan_tag[7:0]  <= wr_data[7:0];
                 if (wr_be[1]) vlan_tag[15:8] <= wr_data[15:8];
             end
@@ -696,7 +696,7 @@ module pcileech_bar_impl_rtl8168_io(
         (rd_dw_off == 8'h7C) ? ocpar :
 
         // ================== VLAN Tag Register (0x80-0x81) ==================
-        (rd_dw_off == 8'h80) ? {16'h0000, vlan_tag} :
+        (rd_dw_off == 8'hC0) ? {16'h0000, vlan_tag} :
 
         // ================== EPHYAR Register (0x80) - NOTE: Same offset as VLAN ==================
         (rd_dw_off == 8'h80) ? ephyar :
@@ -707,7 +707,7 @@ module pcileech_bar_impl_rtl8168_io(
         (rd_dw_off == 8'h98) ? oob_base :
 
         // ================== Timing & Control Registers (0xD4-0xD5) ==================
-        (rd_dw_off == 8'hD4) ? {tx_timer_int, 24'h000000} :
+        (rd_dw_off == 8'hD4) ? {time_int, 24'h000000} :
 
         // ================== RMS - Max Receive Packet Size (0xDA-0xDB) ==================
         (rd_dw_off == 8'hDA) ? {16'h0000, rms} :
